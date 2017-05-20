@@ -15,7 +15,7 @@ pip install -e ./rl-unity
 You can cite rl-unity as follows:
 ```
 @misc{rmst2017rlunity,
-    author = {Adrien Logut, Simon Ramstedt},
+    author = {Simon Ramstedt, Adrien Logut},
     title = {rl-unity},
     year = {2017},
     publisher = {GitHub},
