@@ -29,18 +29,11 @@ class UnityEnv(gym.Env):
     self.connected = False
 
     self.ad = 2
-    self.sd = 16  # TODO: has to remain fixed
+    self.sd = 16
     self.batchmode = batchmode
     self.wp = None
 
     self.action_space = spaces.Box(-np.ones([self.ad]), np.ones([self.ad]))
-    # if batchmode:
-    #   sbm = 5
-    #   self.observation_space = spaces.Box(-np.ones([sbm]), np.ones([sbm]))
-    # else:
-    #   self.observation_space = spaces.Box(np.zeros([self.w, self.h, 3]), np.ones([self.w, self.h, 3]))
-    self.sbm = 6
-    # self.observation_space = spaces.Box(-np.ones([self.sbm]), np.ones([self.sbm]))
     self.log_unity = False
     self.logfile = None
     self.restart = False
@@ -83,42 +76,16 @@ class UnityEnv(gym.Env):
 
     logger.debug('Simulator binary' + bin)
 
-    def stdw():
-      for c in iter(lambda: self.proc.stdout.read(1), ''):
-        sys.stdout.write(c)
-        sys.stdout.flush()
-
-    def poll():
-      while not self.proc.poll():
-        limit = 3
-        if memory_usage(self.proc.pid) > limit * 1024 ** 3:
-          logger.warning(f'Memory usage above {limit} gb. Restarting after this episode.')
-          self.restart = True
-        sleep(5)
-      logger.debug(f'Unity returned with {self.proc.returncode}')
-
-    # https://docs.unity3d.com/Manual/CommandLineArguments.html
-
-    # TODO: ensure that the sim doesn't read or write any cache or config files
-    config_dir = os.path.expanduser('~/.config/unity3d/DefaultCompany/rl-unity')  # TODO: only works on linux
+    # ensure that the sim doesn't read or write any cache or config files
+    # TODO: only works on linux
+    config_dir = os.path.expanduser('~/.config/unity3d/DefaultCompany/rl-unity')
     if os.path.isdir(config_dir):
       from shutil import rmtree
       rmtree(config_dir, ignore_errors=True)
 
-    def limit():
-      import resource
-      l = 6 * 1024 ** 3  # allow 3 gb of address space (less than 3 gb makes the sim crash on startup)
-      try:
-        # resource.setrlimit(resource.RLIMIT_RSS, (l, l))
-        # resource.setrlimit(resource.RLIMIT_DATA, (l, l))
-        # resource.setrlimit(resource.RLIMIT_AS, (l, resource.RLIM_INFINITY))
-        pass
-      except Exception as e:
-        print(e)
-        raise
+    output_redirect = self.logfile if self.logfile else (subprocess.PIPE if self.log_unity else subprocess.DEVNULL)
 
-    stderr = self.logfile if self.logfile else (subprocess.PIPE if self.log_unity else subprocess.DEVNULL)
-    import shutil
+    # https://docs.unity3d.com/Manual/CommandLineArguments.html
     self.proc = subprocess.Popen([bin,
                                   *(['-logfile'] if self.log_unity else []),
                                   *(['-batchmode', '-nographics'] if self.batchmode else []),
@@ -126,14 +93,17 @@ class UnityEnv(gym.Env):
                                   '-screen-height {}'.format(self.h),
                                   ],
                                  env=env,
-                                 stdout=stderr,
-                                 stderr=stderr,
+                                 stdout=output_redirect,
+                                 stderr=output_redirect,
                                  universal_newlines=True,
-                                 preexec_fn=limit)
+                                 )
+
+    def poll():
+      while not self.proc.poll():
+        sleep(1)
+      logger.debug(f'Unity returned with {self.proc.returncode}')
 
     threading.Thread(target=poll, daemon=True).start()
-
-    # threading.Thread(target=stdw, daemon=True).start()
 
     # wait until connection with simulator process
     timeout = 20
@@ -257,16 +227,3 @@ def get_free_port(host):
   port = sock.getsockname()[1]
   sock.close()
   return port
-
-
-def memory_usage(pid):
-  import psutil
-  proc = psutil.Process(pid)
-  mem = proc.memory_info().rss  # resident memory
-  for child in proc.children(recursive=True):
-    try:
-      mem += child.memory_info().rss
-    except psutil.NoSuchProcess:
-      pass
-
-  return mem

@@ -17,7 +17,6 @@ class UnityCarPixels(UnityEnv):
 
     self.t0 = 20 * 7
 
-    sbm = self.sbm
     self.observation_space = spaces.Box(0, 255, shape=[84, 84])
     self.reward_range = (-.1, .1)
     self.r = 0
