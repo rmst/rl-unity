@@ -1,3 +1,4 @@
+README.md
 rl_unity.egg-info/PKG-INFO
 rl_unity.egg-info/SOURCES.txt
 rl_unity.egg-info/dependency_links.txt
@@ -6,3 +7,5 @@ rl_unity.egg-info/top_level.txt
 rlunity/__init__.py
 rlunity/unity_env.py
 rlunity/envs/__init__.py
+rlunity/envs/car_pixels.py
+rlunity/envs/unity_car.py
