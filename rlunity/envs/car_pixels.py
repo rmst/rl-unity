@@ -39,10 +39,10 @@ class UnityCarPixels(UnityEnv):
       direction,  # direction relative to road
     ))
 
-  def _reset(self):
+  def reset(self):
     self.v = np.zeros(self.t_max)
     self.t = 0
-    state, frame = super()._reset()
+    state, frame = super().reset()
     state = self.process_raw_state(state)
     return self.proc_frame(frame)
 
@@ -54,7 +54,7 @@ class UnityCarPixels(UnityEnv):
 
     return frame
 
-  def _step(self, action):
+  def step(self, action):
     action = np.clip(action, -1, 1)
     self.send(action)
     state, frame = self.receive()

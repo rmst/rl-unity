@@ -90,7 +90,7 @@ class UnityEnv(gym.Env):
                                   *(['-logfile'] if self.log_unity else []),
                                   *(['-batchmode', '-nographics'] if self.batchmode else []),
                                   '-screen-width {}'.format(self.w),
-                                  '-screen-height {}'.format(self.h),
+                                  '-screen-height {}'.format(self.h)
                                   ],
                                  env=env,
                                  stdout=output_redirect,
@@ -126,7 +126,7 @@ class UnityEnv(gym.Env):
     if not self.connected:
       raise ConnectionRefusedError('Connection with simulator could not be established.')
 
-  def _reset(self):
+  def reset(self):
     if not self.configured:
       self.conf()
 
@@ -203,7 +203,7 @@ class UnityEnv(gym.Env):
       self.soc.close()
     self.connected = False
 
-  def _close(self):
+  def close(self):
     logger.debug('close')
     if self.proc:
       self.proc.kill()
@@ -212,7 +212,7 @@ class UnityEnv(gym.Env):
     if self.logfile:
       self.logfile.close()
 
-  def _render(self, mode='human', close=False):
+  def render(self, mode='human', close=False):
     if mode == 'rgb_array':
       return self.last_frame  # return RGB frame suitable for video
     elif mode is 'human':
